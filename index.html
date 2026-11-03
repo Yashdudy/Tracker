@@ -1,1 +1,387 @@
-asf
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monthly Expense Tracker - 1 BHK</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 20px 16px;
+      display: flex;
+      justify-content: center;
+    }
+    .app-container {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.4rem; font-weight: 700; }
+    .header select {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      font-weight: 600;
+      color: var(--text);
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      text-align: center;
+    }
+    .stat-card .label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+    .stat-card .value { font-size: 1.25rem; font-weight: 700; margin-top: 4px; color: var(--primary); }
+    .stat-card.split .value { color: var(--text); }
+
+    /* Visual Category Bar */
+    .bar-container {
+      background: var(--card-bg);
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .bar-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; display: flex; justify-content: space-between; }
+    .progress-stacked {
+      display: flex;
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #e2e8f0;
+    }
+    .progress-segment { height: 100%; transition: width 0.3s; }
+
+    /* Form Card */
+    .form-card {
+      background: var(--card-bg);
+      padding: 18px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .form-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 12px; }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    @media (max-width: 500px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: 1fr; gap: 8px; }
+    }
+    input, select, button {
+      font-family: inherit;
+      font-size: 0.9rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      padding: 9px 12px;
+      outline: none;
+    }
+    input:focus, select:focus { border-color: var(--primary); }
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+
+    /* Expense List */
+    .list-card {
+      background: var(--card-bg);
+      padding: 18px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .list-title { font-size: 0.95rem; font-weight: 700; }
+    .expense-list { display: flex; flex-direction: column; gap: 8px; }
+    .expense-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: #fdfdfd;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .item-meta { display: flex; flex-direction: column; gap: 2px; }
+    .item-name { font-weight: 600; font-size: 0.9rem; }
+    .item-tags { display: flex; gap: 6px; font-size: 0.75rem; color: var(--text-muted); }
+    .tag {
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #f1f5f9;
+      font-weight: 500;
+    }
+    .item-right { display: flex; align-items: center; gap: 12px; }
+    .item-amount { font-weight: 700; font-size: 0.95rem; }
+    .btn-del {
+      background: transparent;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      padding: 4px 6px;
+      font-size: 1rem;
+      line-height: 1;
+      border-radius: 4px;
+    }
+    .btn-del:hover { background: #fee2e2; }
+    .empty-state { text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px 0; }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Header & Month Selection -->
+  <div class="header">
+    <div>
+      <h1>Monthly Expenses</h1>
+      <small style="color: var(--text-muted)">1 BHK Home Budget</small>
+    </div>
+    <select id="monthSelect" onchange="renderApp()">
+      <option value="Nov 2026">Nov 2026</option>
+      <option value="Dec 2026">Dec 2026</option>
+      <option value="Jan 2027">Jan 2027</option>
+    </select>
+  </div>
+
+  <!-- Metric Totals -->
+  <div class="summary-grid">
+    <div class="stat-card">
+      <div class="label">Total Spent</div>
+      <div class="value" id="totalExpense">₹0</div>
+    </div>
+    <div class="stat-card split">
+      <div class="label">Your Share (50%)</div>
+      <div class="value" id="userShare">₹0</div>
+    </div>
+    <div class="stat-card split">
+      <div class="label">Partner Share</div>
+      <div class="value" id="partnerShare">₹0</div>
+    </div>
+  </div>
+
+  <!-- Category Breakdown Progress Bar -->
+  <div class="bar-container">
+    <div class="bar-title">
+      <span>Category Breakdown</span>
+      <span id="categorySummary" style="color: var(--text-muted); font-weight: 500;">0 categories</span>
+    </div>
+    <div class="progress-stacked" id="categoryBar"></div>
+  </div>
+
+  <!-- Add Expense Form -->
+  <div class="form-card">
+    <div class="form-title">➕ Add New Expense</div>
+    <form id="expenseForm" onsubmit="addExpense(event)">
+      <div class="form-grid">
+        <input type="text" id="descInput" placeholder="Expense description (e.g. Groceries)" required>
+        <input type="number" id="amountInput" placeholder="Amount (₹)" min="1" step="any" required>
+        <select id="catInput">
+          <option value="Rent">Rent</option>
+          <option value="Utilities">Utilities & Bills</option>
+          <option value="Groceries">Groceries & Food</option>
+          <option value="Household">Household & Setup</option>
+          <option value="Misc">Other</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <select id="splitInput" style="flex: 1;">
+          <option value="Split 50/50">Split 50/50 (Both)</option>
+          <option value="Paid by Me">Paid by Me (100%)</option>
+          <option value="Paid by Partner">Paid by Partner (100%)</option>
+        </select>
+        <button type="submit" class="btn-primary" style="flex: 1;">Add Expense</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Expense Item List -->
+  <div class="list-card">
+    <div class="list-header">
+      <div class="list-title">Expenses Log</div>
+      <button onclick="resetDefaults()" style="font-size: 0.75rem; border: none; background: none; color: var(--primary); cursor: pointer;">Load Starter Templates</button>
+    </div>
+    <div class="expense-list" id="expenseList"></div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = '1bhk_monthly_expenses_v1';
+  const categoryColors = {
+    'Rent': '#4f46e5',
+    'Utilities': '#06b6d4',
+    'Groceries': '#10b981',
+    'Household': '#f59e0b',
+    'Misc': '#8b5cf6'
+  };
+
+  // Pre-configured baseline expenses for a typical 1 BHK move-in
+  const defaultExpenses = [
+    { id: 1, month: 'Nov 2026', desc: '1 BHK Flat Rent', amount: 22000, category: 'Rent', split: 'Split 50/50' },
+    { id: 2, month: 'Nov 2026', desc: 'ACT Fibernet (100 Mbps Plan)', amount: 915, category: 'Utilities', split: 'Split 50/50' },
+    { id: 3, month: 'Nov 2026', desc: 'BESCOM Electricity Bill', amount: 1200, category: 'Utilities', split: 'Split 50/50' },
+    { id: 4, month: 'Nov 2026', desc: 'Kitchen Staples & Groceries', amount: 4500, category: 'Groceries', split: 'Split 50/50' },
+    { id: 5, month: 'Nov 2026', desc: 'Cleaning Supplies & Plastics', amount: 1100, category: 'Household', split: 'Split 50/50' }
+  ];
+
+  function getExpenses() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : defaultExpenses;
+  }
+
+  function saveExpenses(expenses) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
+    renderApp();
+  }
+
+  function addExpense(e) {
+    e.preventDefault();
+    const desc = document.getElementById('descInput').value.trim();
+    const amount = parseFloat(document.getElementById('amountInput').value);
+    const category = document.getElementById('catInput').value;
+    const split = document.getElementById('splitInput').value;
+    const month = document.getElementById('monthSelect').value;
+
+    if (!desc || isNaN(amount)) return;
+
+    const expenses = getExpenses();
+    expenses.unshift({
+      id: Date.now(),
+      month,
+      desc,
+      amount,
+      category,
+      split
+    });
+
+    saveExpenses(expenses);
+    document.getElementById('descInput').value = '';
+    document.getElementById('amountInput').value = '';
+  }
+
+  function deleteExpense(id) {
+    let expenses = getExpenses();
+    expenses = expenses.filter(item => item.id !== id);
+    saveExpenses(expenses);
+  }
+
+  function resetDefaults() {
+    if (confirm("Reset to default 1 BHK starter budget?")) {
+      saveExpenses(defaultExpenses);
+    }
+  }
+
+  function renderApp() {
+    const selectedMonth = document.getElementById('monthSelect').value;
+    const allExpenses = getExpenses();
+    const monthExpenses = allExpenses.filter(e => e.month === selectedMonth);
+
+    let total = 0;
+    let userTotal = 0;
+    let partnerTotal = 0;
+    const catTotals = {};
+
+    monthExpenses.forEach(exp => {
+      total += exp.amount;
+      catTotals[exp.category] = (catTotals[exp.category] || 0) + exp.amount;
+
+      if (exp.split === 'Split 50/50') {
+        userTotal += exp.amount / 2;
+        partnerTotal += exp.amount / 2;
+      } else if (exp.split === 'Paid by Me') {
+        userTotal += exp.amount;
+      } else if (exp.split === 'Paid by Partner') {
+        partnerTotal += exp.amount;
+      }
+    });
+
+    // Update Totals
+    document.getElementById('totalExpense').innerText = `₹${total.toLocaleString('en-IN')}`;
+    document.getElementById('userShare').innerText = `₹${Math.round(userTotal).toLocaleString('en-IN')}`;
+    document.getElementById('partnerShare').innerText = `₹${Math.round(partnerTotal).toLocaleString('en-IN')}`;
+
+    // Render Progress Bar Segments
+    const bar = document.getElementById('categoryBar');
+    bar.innerHTML = '';
+    const catKeys = Object.keys(catTotals);
+    document.getElementById('categorySummary').innerText = `${catKeys.length} categories`;
+
+    catKeys.forEach(cat => {
+      const pct = total > 0 ? (catTotals[cat] / total) * 100 : 0;
+      const seg = document.createElement('div');
+      seg.className = 'progress-segment';
+      seg.style.width = pct + '%';
+      seg.style.backgroundColor = categoryColors[cat] || '#94a3b8';
+      seg.title = `${cat}: ₹${catTotals[cat].toLocaleString('en-IN')} (${Math.round(pct)}%)`;
+      bar.appendChild(seg);
+    });
+
+    // Render List Items
+    const listEl = document.getElementById('expenseList');
+    if (monthExpenses.length === 0) {
+      listEl.innerHTML = `<div class="empty-state">No expenses logged for ${selectedMonth}.</div>`;
+      return;
+    }
+
+    listEl.innerHTML = monthExpenses.map(item => `
+      <div class="expense-item">
+        <div class="item-meta">
+          <span class="item-name">${item.desc}</span>
+          <div class="item-tags">
+            <span class="tag" style="color: ${categoryColors[item.category] || '#475569'}">${item.category}</span>
+            <span class="tag">${item.split}</span>
+          </div>
+        </div>
+        <div class="item-right">
+          <span class="item-amount">₹${item.amount.toLocaleString('en-IN')}</span>
+          <button class="btn-del" onclick="deleteExpense(${item.id})" title="Delete">✕</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Initial render on page load
+  renderApp();
+</script>
+
+</body>
+</html>
